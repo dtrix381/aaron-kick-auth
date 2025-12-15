@@ -18,13 +18,12 @@ def kick_login():
     redirect_uri = "https://aaron-kick-auth.onrender.com/auth/kick/callback"
 
     auth_url = (
-        "https://id.kick.com/oauth/authorize"
+        "https://kick.com/oauth/authorize"
         "?response_type=code"
         f"&client_id={client_id}"
         f"&redirect_uri={redirect_uri}"
         "&scope=user:read"
     )
-
     return redirect(auth_url)
 
 @app.route("/auth/kick/callback")

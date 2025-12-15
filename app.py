@@ -29,5 +29,38 @@ def kick_login():
 @app.route("/auth/kick/callback")
 def kick_callback():
     code = request.args.get("code")
-    return jsonify({"code": code})
+    if not code:
+        return "No code provided", 400
+
+    client_id = os.environ["KICK_CLIENT_ID"]
+    client_secret = os.environ["KICK_CLIENT_SECRET"]
+    redirect_uri = "https://aaron-kick-auth.onrender.com/auth/kick/callback"
+
+    # ✅ Updated token URL
+    token_url = "https://kick.com/oauth/token"
+
+    data = {
+        "grant_type": "authorization_code",
+        "code": code,
+        "client_id": client_id,
+        "client_secret": client_secret,
+        "redirect_uri": redirect_uri,
+    }
+
+    headers = {
+        "Content-Type": "application/x-www-form-urlencoded"
+    }
+
+    resp = requests.post(token_url, data=data, headers=headers)
+    if resp.status_code != 200:
+        return f"Token exchange failed: {resp.text}", 400
+
+    token_data = resp.json()
+
+    # Save token_data somewhere accessible to your bot
+    with open("kick_token.json", "w") as f:
+        f.write(resp.text)
+
+    return "Kick OAuth successful! You can close this page."
+
 

@@ -18,7 +18,7 @@ def kick_login():
     redirect_uri = "https://aaron-kick-auth.onrender.com/auth/kick/callback"
 
     auth_url = (
-        "https://kick.com/oauth/authorize"
+        "https://id.kick.com/oauth/authorize"
         "?response_type=code"
         f"&client_id={client_id}"
         f"&redirect_uri={redirect_uri}"
@@ -28,6 +28,9 @@ def kick_login():
 
 @app.route("/auth/kick/callback")
 def kick_callback():
+    print("✅ Kick callback hit")
+    print("Query params:", request.args)
+
     code = request.args.get("code")
     if not code:
         return "No code provided", 400

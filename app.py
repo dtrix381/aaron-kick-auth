@@ -57,9 +57,9 @@ def kick_callback():
 
     token_data = resp.json()
 
-    # Save token_data somewhere accessible to your bot
-    with open("kick_token.json", "w") as f:
-        f.write(resp.text)
+    print("=== KICK OAUTH TOKEN ===")
+    print(token_data)
+    print("========================")
 
     return "Kick OAuth successful! You can close this page."
 

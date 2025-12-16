@@ -1,8 +1,12 @@
-from flask import Flask, redirect, request, jsonify
+from flask import Flask, redirect, request
 import os
 import requests
 
 app = Flask(__name__)
+
+KICK_CLIENT_ID = os.environ.get("KICK_CLIENT_ID")
+KICK_CLIENT_SECRET = os.environ.get("KICK_CLIENT_SECRET")
+KICK_REDIRECT_URI = "https://aaron-kick-auth.onrender.com/auth/kick/callback"
 
 @app.route("/")
 def home():
@@ -14,56 +18,58 @@ def health():
 
 @app.route("/auth/kick/login")
 def kick_login():
-    client_id = os.environ["KICK_CLIENT_ID"]
-    redirect_uri = "https://aaron-kick-auth.onrender.com/auth/kick/callback"
+    if not KICK_CLIENT_ID:
+        return "Missing KICK_CLIENT_ID", 500
 
     auth_url = (
         "https://id.kick.com/oauth/authorize"
         "?response_type=code"
-        f"&client_id={client_id}"
-        f"&redirect_uri={redirect_uri}"
+        f"&client_id={KICK_CLIENT_ID}"
+        f"&redirect_uri={KICK_REDIRECT_URI}"
         "&scope=user:read"
     )
+
+    print("🔗 Redirecting to:", auth_url)
     return redirect(auth_url)
+
 
 @app.route("/auth/kick/callback")
 def kick_callback():
     print("✅ Kick callback hit")
-    print("Query params:", request.args)
+    print("🔎 Query params:", dict(request.args))
 
     code = request.args.get("code")
     if not code:
-        return "No code provided", 400
+        return "❌ No code provided", 400
 
-    client_id = os.environ["KICK_CLIENT_ID"]
-    client_secret = os.environ["KICK_CLIENT_SECRET"]
-    redirect_uri = "https://aaron-kick-auth.onrender.com/auth/kick/callback"
+    if not KICK_CLIENT_SECRET:
+        return "❌ Missing KICK_CLIENT_SECRET", 500
 
-    # ✅ Updated token URL
     token_url = "https://kick.com/oauth/token"
 
     data = {
         "grant_type": "authorization_code",
         "code": code,
-        "client_id": client_id,
-        "client_secret": client_secret,
-        "redirect_uri": redirect_uri,
+        "client_id": KICK_CLIENT_ID,
+        "client_secret": KICK_CLIENT_SECRET,
+        "redirect_uri": KICK_REDIRECT_URI,
     }
 
     headers = {
-        "Content-Type": "application/x-www-form-urlencoded"
+        "Content-Type": "application/x-www-form-urlencoded",
+        "Accept": "application/json"
     }
 
-    resp = requests.post(token_url, data=data, headers=headers)
+    resp = requests.post(token_url, data=data, headers=headers, timeout=10)
+
     if resp.status_code != 200:
+        print("❌ Token exchange failed:", resp.text)
         return f"Token exchange failed: {resp.text}", 400
 
     token_data = resp.json()
 
-    print("=== KICK OAUTH TOKEN ===")
+    print("\n=== ✅ KICK OAUTH TOKEN RECEIVED ===")
     print(token_data)
-    print("========================")
+    print("=================================\n")
 
-    return "Kick OAuth successful! You can close this page."
-
-
+    return "✅ Kick OAuth successful! You can close this page."
